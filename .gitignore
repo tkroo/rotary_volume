@@ -1,0 +1,7 @@
+lib/
+aside/
+.fseventsd/
+.vscode/
+.metadata_never_index
+boot_out.txt
+settings.toml
