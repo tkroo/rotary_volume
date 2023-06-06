@@ -4,23 +4,23 @@ import digitalio
 import usb_hid
 from adafruit_hid.consumer_control import ConsumerControl
 from adafruit_hid.consumer_control_code import ConsumerControlCode
+import adafruit_debouncer
 
 sda_pin = board.D0
 scl_pin = board.D1
-button_pin = board.D2
+b_pin = board.D2
 
-button = digitalio.DigitalInOut(button_pin)
-button.direction = digitalio.Direction.INPUT
-button.pull = digitalio.Pull.UP
+button_pin = digitalio.DigitalInOut(b_pin)
+button_pin.direction = digitalio.Direction.INPUT
+button_pin.pull = digitalio.Pull.UP
 
+button = adafruit_debouncer.Button( button_pin, value_when_pressed=False )
 encoder = rotaryio.IncrementalEncoder(sda_pin, scl_pin)
-
 cc = ConsumerControl(usb_hid.devices)
-
-button_state = None
 last_position = encoder.position
 
 while True:
+    button.update()
     current_position = encoder.position
     position_change = current_position - last_position
     if position_change > 0:
@@ -32,9 +32,8 @@ while True:
             cc.send(ConsumerControlCode.VOLUME_DECREMENT)
         print(current_position)
     last_position = current_position
-    if not button.value and button_state is None:
-        button_state = "pressed"
-    if button.value and button_state == "pressed":
-        print("Button pressed.")
+
+    if button.short_count == 1:
         cc.send(ConsumerControlCode.PLAY_PAUSE)
-        button_state = None
+    elif button.short_count == 2:
+        cc.send(ConsumerControlCode.MUTE)
